@@ -7,7 +7,7 @@ import (
 	"crypto/rsa"
 	"crypto/sha1"
 	"crypto/x509"
-	"encoding/base64"
+	"encoding/hex"
 	"encoding/pem"
 	"errors"
 	"fmt"
@@ -114,7 +114,7 @@ func (c CalendarAppWebhook) Verify(httpRequest *http.Request) bool {
 	httpRequest.Body = ioutil.NopCloser(bytes.NewBuffer(requestBody))
 	mac.Write(requestBody)
 	macSum := mac.Sum(nil)
-	expectedMac := []byte(base64.StdEncoding.EncodeToString(macSum))
+	expectedMac := []byte(hex.EncodeToString(macSum))
 
 	return hmac.Equal(actualMac, expectedMac)
 }
