@@ -1,14 +1,19 @@
 package timetree
 
 import (
+	"bytes"
 	"context"
+	"crypto/hmac"
 	"crypto/rsa"
+	"crypto/sha1"
 	"crypto/x509"
+	"encoding/base64"
 	"encoding/pem"
 	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/dgrijalva/jwt-go"
@@ -92,4 +97,28 @@ func (c *CalendarAppAuthenticator) readPrivateKey() (*rsa.PrivateKey, error) {
 		return nil, errors.New("invalid private key data")
 	}
 	return x509.ParsePKCS1PrivateKey(block.Bytes)
+}
+
+type CalendarAppWebhook struct {
+	secret string
+}
+
+func NewCalendarAppWebhook(secret string) *CalendarAppWebhook {
+	return &CalendarAppWebhook{
+		secret: secret,
+	}
+}
+
+func (c CalendarAppWebhook) Verify(httpRequest *http.Request) bool {
+	sha := strings.TrimPrefix(httpRequest.Header.Get("X-Timetree-Signature"), "sha1=")
+	actualMac := []byte(sha)
+
+	mac := hmac.New(sha1.New, []byte(c.secret))
+	requestBody, _ := ioutil.ReadAll(httpRequest.Body)
+	httpRequest.Body = ioutil.NopCloser(bytes.NewBuffer(requestBody))
+	mac.Write(requestBody)
+	macSum := mac.Sum(nil)
+	expectedMac := []byte(base64.StdEncoding.EncodeToString(macSum))
+
+	return hmac.Equal(actualMac, expectedMac)
 }
