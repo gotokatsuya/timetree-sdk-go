@@ -25,24 +25,36 @@ const DEFAULT_ACCESS_TOKEN_LIFETIME = 600
 
 type CalendarAppAuthenticator struct {
 	applicationID            string
-	privateKeyPath           string
 	accessTokenLifetimeInSec int
+	privateKey               *rsa.PrivateKey
 
 	client *api.Client
 }
 
-func NewCalendarAppAuthenticator(applicationID, privateKeyPath string) (*CalendarAppAuthenticator, error) {
+func NewCalendarAppAuthenticator(applicationID string, privateKeyData []byte) (*CalendarAppAuthenticator, error) {
 	c := &CalendarAppAuthenticator{
 		applicationID:            applicationID,
-		privateKeyPath:           privateKeyPath,
 		accessTokenLifetimeInSec: DEFAULT_ACCESS_TOKEN_LIFETIME,
 	}
+	privateKey, err := c.pemToPrivateKey(privateKeyData)
+	if err != nil {
+		return nil, err
+	}
+	c.privateKey = privateKey
 	cli, err := api.NewClientWithoutAccessToken(http.DefaultClient)
 	if err != nil {
 		return nil, err
 	}
 	c.client = cli
 	return c, nil
+}
+
+func (c *CalendarAppAuthenticator) pemToPrivateKey(data []byte) (*rsa.PrivateKey, error) {
+	block, _ := pem.Decode(data)
+	if block == nil {
+		return nil, errors.New("invalid private key data")
+	}
+	return x509.ParsePKCS1PrivateKey(block.Bytes)
 }
 
 // AccessToken アクセストークンの取得
@@ -80,23 +92,7 @@ func (c *CalendarAppAuthenticator) generateToken() (string, error) {
 		ExpiresAt: now.Add(time.Duration(c.accessTokenLifetimeInSec) * time.Second).Unix(),
 		Issuer:    c.applicationID,
 	})
-	key, err := c.readPrivateKey()
-	if err != nil {
-		return "", err
-	}
-	return token.SignedString(key)
-}
-
-func (c *CalendarAppAuthenticator) readPrivateKey() (*rsa.PrivateKey, error) {
-	bytes, err := ioutil.ReadFile(c.privateKeyPath)
-	if err != nil {
-		return nil, err
-	}
-	block, _ := pem.Decode(bytes)
-	if block == nil {
-		return nil, errors.New("invalid private key data")
-	}
-	return x509.ParsePKCS1PrivateKey(block.Bytes)
+	return token.SignedString(c.privateKey)
 }
 
 type CalendarAppWebhook struct {

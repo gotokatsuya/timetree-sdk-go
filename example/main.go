@@ -2,7 +2,9 @@ package main
 
 import (
 	"context"
+	"io/ioutil"
 	"log"
+	"net/http"
 	"os"
 
 	"github.com/gotokatsuya/timetree-sdk-go/timetree"
@@ -17,7 +19,12 @@ var (
 func main() {
 	ctx := context.Background()
 
-	authenticator, err := timetree.NewCalendarAppAuthenticator(CalendarAppID, PrivateKeyPath)
+	privateKeyData, err := ioutil.ReadFile(PrivateKeyPath)
+	if err != nil {
+		panic(err)
+	}
+
+	authenticator, err := timetree.NewCalendarAppAuthenticator(CalendarAppID, privateKeyData)
 	if err != nil {
 		panic(err)
 	}
@@ -26,7 +33,7 @@ func main() {
 		panic(err)
 	}
 	switch httpRes.StatusCode {
-	case 200, 201, 204:
+	case http.StatusOK, http.StatusCreated, http.StatusNoContent:
 		log.Printf("EventID: %s\n", accessTokenRes.AccessToken)
 	default:
 		log.Printf("Error: %s\n", accessTokenRes.ErrorResponse.Title)
@@ -55,7 +62,7 @@ func main() {
 		panic(err)
 	}
 	switch httpRes.StatusCode {
-	case 200, 201, 204:
+	case http.StatusOK, http.StatusCreated, http.StatusNoContent:
 		log.Printf("EventID: %s\n", calendarEventRes.Data.ID)
 	default:
 		log.Printf("Error: %s\n", calendarEventRes.ErrorResponse.Title)
