@@ -11,24 +11,24 @@ import (
 )
 
 var (
-	InstallationID = os.Getenv("INSTALLATION_ID")
-	CalendarAppID  = os.Getenv("CALENDAR_APP_ID")
-	PrivateKeyPath = os.Getenv("PRIVATE_KEY_PATH")
+	installationID = os.Getenv("INSTALLATION_ID")
+	calendarAppID  = os.Getenv("CALENDAR_APP_ID")
+	privateKeyPath = os.Getenv("PRIVATE_KEY_PATH")
 )
 
 func main() {
 	ctx := context.Background()
 
-	privateKeyData, err := ioutil.ReadFile(PrivateKeyPath)
+	privateKey, err := ioutil.ReadFile(privateKeyPath)
 	if err != nil {
 		panic(err)
 	}
 
-	authenticator, err := timetree.NewCalendarAppAuthenticator(CalendarAppID, privateKeyData)
+	authenticator, err := timetree.NewCalendarAppAuthenticator(calendarAppID, privateKey)
 	if err != nil {
 		panic(err)
 	}
-	accessTokenRes, httpRes, err := authenticator.AccessToken(ctx, InstallationID)
+	accessTokenRes, httpRes, err := authenticator.AccessToken(ctx, installationID)
 	if err != nil {
 		panic(err)
 	}
@@ -48,12 +48,13 @@ func main() {
 		Data: timetree.CreateCalendarEventRequestData{
 			Attributes: timetree.EventAttributes{
 				Category:      "schedule",
-				Title:         "予定日",
+				Title:         "予定日1",
 				AllDay:        true,
 				StartAt:       "2020-11-18T00:00:00.000Z",
 				StartTimezone: "Asia/Tokyo",
 				EndAt:         "2020-11-23T00:00:00.000Z",
 				EndTimezone:   "Asia/Tokyo",
+				Description:   "予定日1の詳細",
 			},
 		},
 	}

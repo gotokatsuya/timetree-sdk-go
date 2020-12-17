@@ -24,7 +24,7 @@ type Client struct {
 	endpoint    *url.URL
 }
 
-// NewClient returns a newvclient instance.
+// NewClient returns a new client instance.
 func NewClient(accessToken string, httpClient *http.Client) (*Client, error) {
 	c := &Client{
 		accessToken: accessToken,
@@ -38,8 +38,8 @@ func NewClient(accessToken string, httpClient *http.Client) (*Client, error) {
 	return c, nil
 }
 
-// NewClientWithoutAccessToken returns a new pay client instance.
-func NewClientWithoutAccessToken(httpClient *http.Client) (*Client, error) {
+// NewAuthenticatorClient returns a new client instance.
+func NewAuthenticatorClient(httpClient *http.Client) (*Client, error) {
 	return NewClient("", httpClient)
 }
 
@@ -135,11 +135,4 @@ func (c *Client) Do(ctx context.Context, req *http.Request, v interface{}) (*htt
 		}
 	}
 	return resp, err
-}
-
-type ErrorResponse struct {
-	Type   string `json:"type,omitempty"`
-	Status int    `json:"status,omitempty"`
-	Title  string `json:"title,omitempty"`
-	// Errors string `json:"errors"`
 }
