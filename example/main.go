@@ -45,11 +45,11 @@ func main() {
 		panic(err)
 	}
 	req := &timetree.CreateCalendarEventRequest{
-		Data: timetree.CreateCalendarEventRequestData{
-			Attributes: timetree.EventAttributes{
+		Data: &timetree.CalendarEventRequestData{
+			Attributes: &timetree.Attributes{
 				Category:      "schedule",
 				Title:         "予定日1",
-				AllDay:        true,
+				AllDay:        timetree.Bool(true),
 				StartAt:       "2020-11-18T00:00:00.000Z",
 				StartTimezone: "Asia/Tokyo",
 				EndAt:         "2020-11-23T00:00:00.000Z",

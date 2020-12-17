@@ -52,9 +52,9 @@ func NewCalendarAppAuthenticator(applicationID string, privateKey []byte) (*Cale
 // AccessTokenResponse type
 type AccessTokenResponse struct {
 	api.ErrorResponse
-	AccessToken string `json:"access_token"`
-	ExpireAt    int64  `json:"expire_at"`
-	TokenType   string `json:"token_type"`
+	AccessToken string `json:"access_token,omitempty"`
+	ExpireAt    int64  `json:"expire_at,omitempty"`
+	TokenType   string `json:"token_type,omitempty"`
 }
 
 // AccessToken アクセストークンの取得
