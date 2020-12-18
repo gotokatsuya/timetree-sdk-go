@@ -20,6 +20,7 @@ func NewCalendarAppWebhook(secret string) *CalendarAppWebhook {
 	}
 }
 
+// Verify Webhookリクエストの検証
 func (c CalendarAppWebhook) Verify(httpRequest *http.Request) bool {
 	sha := strings.TrimPrefix(httpRequest.Header.Get("X-Timetree-Signature"), "sha1=")
 	actualMac := []byte(sha)

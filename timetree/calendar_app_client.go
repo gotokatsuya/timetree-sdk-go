@@ -12,9 +12,9 @@ type CalendarAppClient struct {
 	client *api.Client
 }
 
-func NewCalendarAppClient(accessToken string) (*CalendarAppClient, error) {
+func NewCalendarAppClient(accessToken string, httpClient *http.Client) (*CalendarAppClient, error) {
 	c := &CalendarAppClient{}
-	cli, err := api.NewClient(accessToken, http.DefaultClient)
+	cli, err := api.NewClient(accessToken, httpClient)
 	if err != nil {
 		return nil, err
 	}
@@ -54,12 +54,11 @@ type CalendarEventResponse struct {
 	Data *CalendarEventResponseData `json:"data,omitempty"`
 }
 
-// CreateCalendarEventRequest type
 type CreateCalendarEventRequest CalendarEventRequest
 
-// CreateCalendarEventResponse type
 type CreateCalendarEventResponse CalendarEventResponse
 
+// CreateCalendarEvent 予定の作成
 func (c *CalendarAppClient) CreateCalendarEvent(ctx context.Context, req *CreateCalendarEventRequest) (*CreateCalendarEventResponse, *http.Response, error) {
 	path := "/calendar/events"
 	httpReq, err := c.client.NewRequest(http.MethodPost, path, req)
@@ -74,12 +73,11 @@ func (c *CalendarAppClient) CreateCalendarEvent(ctx context.Context, req *Create
 	return resp, httpResp, nil
 }
 
-// UpdateCalendarEventRequest type
 type UpdateCalendarEventRequest CalendarEventRequest
 
-// UpdateCalendarEventResponse type
 type UpdateCalendarEventResponse CalendarEventResponse
 
+// UpdateCalendarEvent 予定の更新
 func (c *CalendarAppClient) UpdateCalendarEvent(ctx context.Context, eventID string, req *UpdateCalendarEventRequest) (*UpdateCalendarEventResponse, *http.Response, error) {
 	path := fmt.Sprintf("/calendar/events/%s", eventID)
 	httpReq, err := c.client.NewRequest(http.MethodPut, path, req)
@@ -94,6 +92,7 @@ func (c *CalendarAppClient) UpdateCalendarEvent(ctx context.Context, eventID str
 	return resp, httpResp, nil
 }
 
+// DeleteCalendarEvent 予定の削除
 func (c *CalendarAppClient) DeleteCalendarEvent(ctx context.Context, eventID string) (*http.Response, error) {
 	path := fmt.Sprintf("/calendar/events/%s", eventID)
 	httpReq, err := c.client.NewRequest(http.MethodDelete, path, nil)

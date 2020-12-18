@@ -15,7 +15,8 @@ import (
 	"github.com/gotokatsuya/timetree-sdk-go/timetree/api"
 )
 
-const defaultAccessTokenLifetime = 600
+// DefaultAccessTokenLifetime token expiration time (10 minute maximum)
+const DefaultAccessTokenLifetime = 600
 
 type CalendarAppAuthenticator struct {
 	applicationID            string
@@ -25,12 +26,12 @@ type CalendarAppAuthenticator struct {
 	client *api.Client
 }
 
-func NewCalendarAppAuthenticator(applicationID string, privateKey []byte) (*CalendarAppAuthenticator, error) {
+func NewCalendarAppAuthenticator(applicationID string, accessTokenLifetimeInSec int, privateKey []byte, httpClient *http.Client) (*CalendarAppAuthenticator, error) {
 	c := &CalendarAppAuthenticator{
 		applicationID:            applicationID,
-		accessTokenLifetimeInSec: defaultAccessTokenLifetime,
+		accessTokenLifetimeInSec: accessTokenLifetimeInSec,
 	}
-	// PrivateKey
+
 	block, _ := pem.Decode(privateKey)
 	if block == nil {
 		return nil, errors.New("invalid private key data")
@@ -41,7 +42,7 @@ func NewCalendarAppAuthenticator(applicationID string, privateKey []byte) (*Cale
 	}
 	c.privateKey = key
 
-	cli, err := api.NewAuthenticatorClient(http.DefaultClient)
+	cli, err := api.NewAuthenticatorClient(httpClient)
 	if err != nil {
 		return nil, err
 	}

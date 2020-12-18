@@ -24,7 +24,7 @@ func main() {
 		panic(err)
 	}
 
-	authenticator, err := timetree.NewCalendarAppAuthenticator(calendarAppID, privateKey)
+	authenticator, err := timetree.NewCalendarAppAuthenticator(calendarAppID, timetree.DefaultAccessTokenLifetime, privateKey, http.DefaultClient)
 	if err != nil {
 		panic(err)
 	}
@@ -40,7 +40,7 @@ func main() {
 		return
 	}
 
-	client, err := timetree.NewCalendarAppClient(accessTokenRes.AccessToken)
+	client, err := timetree.NewCalendarAppClient(accessTokenRes.AccessToken, http.DefaultClient)
 	if err != nil {
 		panic(err)
 	}
