@@ -92,16 +92,21 @@ func (c *CalendarAppClient) UpdateCalendarEvent(ctx context.Context, eventID str
 	return resp, httpResp, nil
 }
 
+type DeleteCalendarEventResponse struct {
+	api.ErrorResponse
+}
+
 // DeleteCalendarEvent 予定の削除
-func (c *CalendarAppClient) DeleteCalendarEvent(ctx context.Context, eventID string) (*http.Response, error) {
+func (c *CalendarAppClient) DeleteCalendarEvent(ctx context.Context, eventID string) (*DeleteCalendarEventResponse, *http.Response, error) {
 	path := fmt.Sprintf("/calendar/events/%s", eventID)
 	httpReq, err := c.client.NewRequest(http.MethodDelete, path, nil)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
-	httpResp, err := c.client.Do(ctx, httpReq, nil)
+	resp := new(DeleteCalendarEventResponse)
+	httpResp, err := c.client.Do(ctx, httpReq, resp)
 	if err != nil {
-		return nil, err
+		return nil, httpResp, err
 	}
-	return httpResp, nil
+	return resp, httpResp, nil
 }
