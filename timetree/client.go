@@ -1,4 +1,4 @@
-package api
+package timetree
 
 import (
 	"bytes"
@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"net/url"
 	"reflect"
+	"strconv"
 
 	"github.com/google/go-querystring/query"
 )
@@ -17,18 +18,22 @@ const (
 	APIEndpoint = "https://timetreeapis.com"
 )
 
+const (
+	HeaderRateLimit     = "X-RateLimit-Limit"
+	HeaderRateRemaining = "X-RateLimit-Remaining"
+	HeaderRateReset     = "X-RateLimit-Reset"
+)
+
 // Client type
 type Client struct {
-	accessToken string
-	httpClient  *http.Client
-	endpoint    *url.URL
+	httpClient *http.Client
+	endpoint   *url.URL
 }
 
 // NewClient returns a new client instance.
-func NewClient(accessToken string, httpClient *http.Client) (*Client, error) {
+func NewClient(httpClient *http.Client) (*Client, error) {
 	c := &Client{
-		accessToken: accessToken,
-		httpClient:  httpClient,
+		httpClient: httpClient,
 	}
 	u, err := url.Parse(APIEndpoint)
 	if err != nil {
@@ -36,11 +41,6 @@ func NewClient(accessToken string, httpClient *http.Client) (*Client, error) {
 	}
 	c.endpoint = u
 	return c, nil
-}
-
-// NewAuthenticatorClient returns a new client instance.
-func NewAuthenticatorClient(httpClient *http.Client) (*Client, error) {
-	return NewClient("", httpClient)
 }
 
 // WithHTTPClient function
@@ -70,8 +70,13 @@ func (c *Client) mergeQuery(path string, q interface{}) (string, error) {
 	return u.String(), nil
 }
 
-// NewRequest method
-func (c *Client) NewRequest(method, path string, body interface{}) (*http.Request, error) {
+// NewInstallationsRequest method
+func (c *Client) NewInstallationsRequest(method, path string, body interface{}) (*http.Request, error) {
+	return c.NewCalendarRequest(method, path, "", body)
+}
+
+// NewCalendarRequest method
+func (c *Client) NewCalendarRequest(method, path string, accessToken string, body interface{}) (*http.Request, error) {
 	switch method {
 	case http.MethodGet, http.MethodDelete:
 		if body != nil {
@@ -105,8 +110,8 @@ func (c *Client) NewRequest(method, path string, body interface{}) (*http.Reques
 	}
 	req.Header.Set("Accept", "application/vnd.timetree.v1+json")
 	req.Header.Set("Content-Type", "application/json")
-	if c.accessToken != "" {
-		req.Header.Set("Authorization", "Bearer "+c.accessToken)
+	if accessToken != "" {
+		req.Header.Set("Authorization", "Bearer "+accessToken)
 	}
 	return req, nil
 }
@@ -125,14 +130,40 @@ func (c *Client) Do(ctx context.Context, req *http.Request, v interface{}) (*htt
 
 	defer resp.Body.Close()
 
-	if v != nil {
-		if w, ok := v.(io.Writer); ok {
-			io.Copy(w, resp.Body)
-		} else {
-			if err := json.NewDecoder(resp.Body).Decode(v); err != nil {
-				return resp, err
-			}
+	switch v := v.(type) {
+	case nil:
+	case io.Writer:
+		_, err = io.Copy(v, resp.Body)
+	default:
+		decErr := json.NewDecoder(resp.Body).Decode(v)
+		if decErr == io.EOF {
+			decErr = nil // ignore EOF errors caused by empty response body
+		}
+		if decErr != nil {
+			err = decErr
 		}
 	}
 	return resp, err
+}
+
+type RateLimit struct {
+	Limit     int   `json:"limit"`
+	Remaining int   `json:"remaining"`
+	Reset     int64 `json:"reset"`
+}
+
+func ParseRateLimit(r *http.Response) RateLimit {
+	var rate RateLimit
+	if limit := r.Header.Get(HeaderRateLimit); limit != "" {
+		rate.Limit, _ = strconv.Atoi(limit)
+	}
+	if remaining := r.Header.Get(HeaderRateRemaining); remaining != "" {
+		rate.Remaining, _ = strconv.Atoi(remaining)
+	}
+	if reset := r.Header.Get(HeaderRateReset); reset != "" {
+		if v, _ := strconv.ParseInt(reset, 10, 64); v != 0 {
+			rate.Reset = v
+		}
+	}
+	return rate
 }

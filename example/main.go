@@ -39,8 +39,9 @@ func main() {
 		log.Printf("Error: %s\n", accessTokenRes.ErrorResponse.Title)
 		return
 	}
+	accessToken := accessTokenRes.AccessToken
 
-	client, err := timetree.NewCalendarAppClient(accessTokenRes.AccessToken, http.DefaultClient)
+	client, err := timetree.NewCalendarAppClient(http.DefaultClient)
 	if err != nil {
 		panic(err)
 	}
@@ -58,10 +59,13 @@ func main() {
 			},
 		},
 	}
-	calendarEventRes, httpRes, err := client.CreateCalendarEvent(ctx, req)
+	calendarEventRes, httpRes, err := client.CreateCalendarEvent(ctx, accessToken, req)
 	if err != nil {
 		panic(err)
 	}
+	rateLimit := timetree.ParseRateLimit(httpRes)
+	log.Printf("RateLimit: %v\n", rateLimit)
+
 	switch httpRes.StatusCode {
 	case http.StatusOK, http.StatusCreated, http.StatusNoContent:
 		log.Printf("EventID: %s\n", calendarEventRes.Data.ID)

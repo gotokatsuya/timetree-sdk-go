@@ -1,4 +1,4 @@
-package api
+package timetree
 
 type ErrorResponse struct {
 	Type   string `json:"type,omitempty"`

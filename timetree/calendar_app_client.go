@@ -4,17 +4,16 @@ import (
 	"context"
 	"fmt"
 	"net/http"
-
-	"github.com/gotokatsuya/timetree-sdk-go/timetree/api"
 )
 
 type CalendarAppClient struct {
-	client *api.Client
+	client *Client
 }
 
-func NewCalendarAppClient(accessToken string, httpClient *http.Client) (*CalendarAppClient, error) {
+func NewCalendarAppClient(httpClient *http.Client) (*CalendarAppClient, error) {
 	c := &CalendarAppClient{}
-	cli, err := api.NewClient(accessToken, httpClient)
+
+	cli, err := NewClient(httpClient)
 	if err != nil {
 		return nil, err
 	}
@@ -50,7 +49,7 @@ type CalendarEventResponseData struct {
 }
 
 type CalendarEventResponse struct {
-	api.ErrorResponse
+	ErrorResponse
 	Data *CalendarEventResponseData `json:"data,omitempty"`
 }
 
@@ -59,9 +58,9 @@ type CreateCalendarEventRequest CalendarEventRequest
 type CreateCalendarEventResponse CalendarEventResponse
 
 // CreateCalendarEvent 予定の作成
-func (c *CalendarAppClient) CreateCalendarEvent(ctx context.Context, req *CreateCalendarEventRequest) (*CreateCalendarEventResponse, *http.Response, error) {
+func (c *CalendarAppClient) CreateCalendarEvent(ctx context.Context, accessToken string, req *CreateCalendarEventRequest) (*CreateCalendarEventResponse, *http.Response, error) {
 	path := "/calendar/events"
-	httpReq, err := c.client.NewRequest(http.MethodPost, path, req)
+	httpReq, err := c.client.NewCalendarRequest(http.MethodPost, path, accessToken, req)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -78,9 +77,9 @@ type UpdateCalendarEventRequest CalendarEventRequest
 type UpdateCalendarEventResponse CalendarEventResponse
 
 // UpdateCalendarEvent 予定の更新
-func (c *CalendarAppClient) UpdateCalendarEvent(ctx context.Context, eventID string, req *UpdateCalendarEventRequest) (*UpdateCalendarEventResponse, *http.Response, error) {
+func (c *CalendarAppClient) UpdateCalendarEvent(ctx context.Context, accessToken string, eventID string, req *UpdateCalendarEventRequest) (*UpdateCalendarEventResponse, *http.Response, error) {
 	path := fmt.Sprintf("/calendar/events/%s", eventID)
-	httpReq, err := c.client.NewRequest(http.MethodPut, path, req)
+	httpReq, err := c.client.NewCalendarRequest(http.MethodPut, path, accessToken, req)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -93,13 +92,13 @@ func (c *CalendarAppClient) UpdateCalendarEvent(ctx context.Context, eventID str
 }
 
 type DeleteCalendarEventResponse struct {
-	api.ErrorResponse
+	ErrorResponse
 }
 
 // DeleteCalendarEvent 予定の削除
-func (c *CalendarAppClient) DeleteCalendarEvent(ctx context.Context, eventID string) (*DeleteCalendarEventResponse, *http.Response, error) {
+func (c *CalendarAppClient) DeleteCalendarEvent(ctx context.Context, accessToken string, eventID string) (*DeleteCalendarEventResponse, *http.Response, error) {
 	path := fmt.Sprintf("/calendar/events/%s", eventID)
-	httpReq, err := c.client.NewRequest(http.MethodDelete, path, nil)
+	httpReq, err := c.client.NewCalendarRequest(http.MethodDelete, path, accessToken, nil)
 	if err != nil {
 		return nil, nil, err
 	}

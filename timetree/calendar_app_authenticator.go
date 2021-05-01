@@ -11,8 +11,6 @@ import (
 	"time"
 
 	"github.com/dgrijalva/jwt-go"
-
-	"github.com/gotokatsuya/timetree-sdk-go/timetree/api"
 )
 
 // DefaultAccessTokenLifetime token expiration time (10 minute maximum)
@@ -23,10 +21,15 @@ type CalendarAppAuthenticator struct {
 	accessTokenLifetimeInSec int
 	privateKey               *rsa.PrivateKey
 
-	client *api.Client
+	client *Client
 }
 
-func NewCalendarAppAuthenticator(applicationID string, accessTokenLifetimeInSec int, privateKey []byte, httpClient *http.Client) (*CalendarAppAuthenticator, error) {
+func NewCalendarAppAuthenticator(
+	applicationID string,
+	accessTokenLifetimeInSec int,
+	privateKey []byte,
+	httpClient *http.Client,
+) (*CalendarAppAuthenticator, error) {
 	c := &CalendarAppAuthenticator{
 		applicationID:            applicationID,
 		accessTokenLifetimeInSec: accessTokenLifetimeInSec,
@@ -42,7 +45,7 @@ func NewCalendarAppAuthenticator(applicationID string, accessTokenLifetimeInSec 
 	}
 	c.privateKey = key
 
-	cli, err := api.NewAuthenticatorClient(httpClient)
+	cli, err := NewClient(httpClient)
 	if err != nil {
 		return nil, err
 	}
@@ -52,7 +55,7 @@ func NewCalendarAppAuthenticator(applicationID string, accessTokenLifetimeInSec 
 
 // AccessTokenResponse type
 type AccessTokenResponse struct {
-	api.ErrorResponse
+	ErrorResponse
 	AccessToken string `json:"access_token,omitempty"`
 	ExpireAt    int64  `json:"expire_at,omitempty"`
 	TokenType   string `json:"token_type,omitempty"`
@@ -61,7 +64,7 @@ type AccessTokenResponse struct {
 // AccessToken アクセストークンの取得
 func (c *CalendarAppAuthenticator) AccessToken(ctx context.Context, installationID string) (*AccessTokenResponse, *http.Response, error) {
 	path := fmt.Sprintf("/installations/%s/access_tokens", installationID)
-	httpReq, err := c.client.NewRequest(http.MethodPost, path, nil)
+	httpReq, err := c.client.NewInstallationsRequest(http.MethodPost, path, nil)
 	if err != nil {
 		return nil, nil, err
 	}
